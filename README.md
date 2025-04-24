@@ -111,7 +111,42 @@ const options = {
    * 
    * Default: true
    */
-  noBorder: false
+  noBorder: false,
+
+  /**
+   * Cropper Ratio
+   * 
+   * Default: '1/1'
+   */
+  cropRatio: '1/1',
+
+  /**
+   * Flixed cropper for
+   * 
+   * Options:
+   * - ratio (When adjusting the cropper size, the same aspect ratio will be maintained.)
+   * - size (If you have set imgFormat and want all output images to be in imgFormat size, you can select this option.)
+   * - none (Default)
+   * 
+   * Default: 'none'
+   */
+  flixedCrop: 'none', 
+
+  /**
+   * When the Cropper board is placed in a floating window (e.g., modal)
+   * 
+   * When used in a floating window, the top position of the cropping frame may have offset values due to the scroll position of the body.
+   * 
+   * Default: false
+   */
+  isOnFloatingWindow: false,
+
+  /**
+   * Whether to automatically reduce the size of the output image
+   * 
+   * Default: false
+   */
+  isAutoDownsize: false
 }
 
 // Initiate cropper
