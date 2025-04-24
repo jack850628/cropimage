@@ -282,6 +282,7 @@
 				RATIO = FORMAT_WIDTH / FORMAT_HEIGHT
 				
 				$(this).find('.R-container [data-action]').show()
+				$(this).find('.R-container [class^=R-side-]').hide()
 			} 
 			else {
 				MIN_SIZES.width = MIN_SIZES.width || 1
@@ -624,12 +625,24 @@
 							
 							// cropper left and top side postion
 							var 
-							POS_X = ( touch ? e.originalEvent.touches[0].pageX : e.pageX ) - $_CROPPER.offset().left,
-							POS_Y = ( touch ? e.originalEvent.touches[0].pageY : e.pageY ) - $_CROPPER.offset().top,
-									
+							LEFT = Math.min(
+									$_CROPPER.position().left + ($_CROPPER.width() - MIN_WIDTH),
+									Math.max(
+										$_ADAPTER.offset().left, 
+										( touch ? e.originalEvent.touches[0].clientX : e.clientX )
+									) - $_ADAPTER.offset().left
+								),
+							TOP = Math.min(
+									$_CROPPER.position().top + ($_CROPPER.height() - MIN_HEIGHT),
+									Math.max(
+										($_ADAPTER.offset().top - (OPTIONS.isOnFloatingWindow ? $(window).scrollTop() : 0)), 
+										(touch ? e.originalEvent.touches[0].clientY : e.clientY)
+									) - ($_ADAPTER.offset().top - (OPTIONS.isOnFloatingWindow ? $(window).scrollTop() : 0))
+								),
+
+							POS_X = Math.max($_ADAPTER.offset().left, ( touch ? e.originalEvent.touches[0].pageX : e.pageX )) - $_CROPPER.offset().left,
+							POS_Y = Math.max($_ADAPTER.offset().top, ( touch ? e.originalEvent.touches[0].pageY : e.pageY )) - $_CROPPER.offset().top,
 							// image relative position
-							LEFT = ( touch ? e.originalEvent.touches[0].clientX : e.clientX ) - $_ADAPTER.offset().left,
-							TOP = ( touch ? e.originalEvent.touches[0].clientY : e.clientY ) - ($_ADAPTER.offset().top - (OPTIONS.isOnFloatingWindow ? $(window).scrollTop() : 0)),
 							
 							SC_WIDTH,
 							SC_HEIGHT,
@@ -637,111 +650,39 @@
 							
 							switch( RESIZING.t.data('action') ){
 								case 'l-crop': {
-									SC_WIDTH = $_CROPPER.width() - POS_X;
+									SC_WIDTH = Math.max( $_CROPPER.width() - POS_X, MIN_WIDTH);
 								
-									if( CropLimitLeft <= LEFT && SC_WIDTH > MIN_WIDTH ){
-	
-										if (!AUTO_CROP) {
-											$_CROPPER.css({ 'width': SC_WIDTH + 'px', 'left': LEFT + 'px' })
-											cropCanvas.width = SC_WIDTH
-										} else {
-											SC_HEIGHT = SC_WIDTH * ASPECT_RATIO;
-											if (SC_HEIGHT < MIN_HEIGHT) {
-												break; // 如果高度小於最小高度，不進行調整
-											}
-											const MAX = ADAPTED.height - $_CROPPER.position().top;
-											if (MAX < SC_HEIGHT) {
-												SC_WIDTH -= (SC_HEIGHT - MAX ) / ASPECT_RATIO;
-												SC_HEIGHT = MAX;
-												LEFT = $_CROPPER.position().left;
-											}
-											$_CROPPER.css({ 'width': SC_WIDTH + 'px', 'height': SC_HEIGHT + 'px', 'left': LEFT + 'px' })
-											cropCanvas.width = SC_WIDTH;
-											cropCanvas.height = SC_HEIGHT;
-										}
-	
-										ctx_Dynamic.drawImage(staticCanvas, borderWise(LEFT, true), borderWise($_CROPPER.position().top, true), SC_WIDTH, $_CROPPER.height(), 0, 0, SC_WIDTH, $_CROPPER.height())
-									}
+									$_CROPPER.css({ 'width': SC_WIDTH + 'px', 'left': LEFT + 'px' })
+									cropCanvas.width = SC_WIDTH
+
+									ctx_Dynamic.drawImage(staticCanvas, borderWise(LEFT, true), borderWise($_CROPPER.position().top, true), SC_WIDTH, $_CROPPER.height(), 0, 0, SC_WIDTH, $_CROPPER.height())
 								} break
 								
 								case 'r-crop': {
-									SC_WIDTH = POS_X;
-	
-									if( borderWise( CropLimitRight ) >= LEFT && SC_WIDTH > MIN_WIDTH ){
-	
-										if (!AUTO_CROP) {
-											$_CROPPER.css('width', SC_WIDTH + 'px')
-											cropCanvas.width = SC_WIDTH
-										} else {
-											SC_HEIGHT = SC_WIDTH * ASPECT_RATIO;
-											if (SC_HEIGHT < MIN_HEIGHT) {
-												break; // 如果高度小於最小高度，不進行調整
-											}
-											const MAX = ADAPTED.height - $_CROPPER.position().top;
-											if (MAX < SC_HEIGHT) {
-												SC_WIDTH -= (SC_HEIGHT - MAX) / ASPECT_RATIO;
-												SC_HEIGHT = MAX;
-											}
-											$_CROPPER.css({ 'width': SC_WIDTH + 'px', 'height': SC_HEIGHT + 'px'})
-											cropCanvas.width = SC_WIDTH;
-											cropCanvas.height = SC_HEIGHT;
-										}
-										
-										ctx_Dynamic.drawImage( staticCanvas, borderWise( $_CROPPER.position().left, true ), borderWise( $_CROPPER.position().top, true ), SC_WIDTH, $_CROPPER.height(), 0, 0, SC_WIDTH, $_CROPPER.height() )
-									}
+									SC_WIDTH = Math.min(borderWise($_ADAPTER.width() - $_CROPPER.position().left, false), Math.max(POS_X, MIN_WIDTH));
+
+									$_CROPPER.css('width', SC_WIDTH + 'px')
+									cropCanvas.width = SC_WIDTH
+									
+									ctx_Dynamic.drawImage( staticCanvas, borderWise( $_CROPPER.position().left, true ), borderWise( $_CROPPER.position().top, true ), SC_WIDTH, $_CROPPER.height(), 0, 0, SC_WIDTH, $_CROPPER.height() )
 								} break
 	
 								case 't-crop': {
-									SC_HEIGHT = $_CROPPER.height() - POS_Y;
+									SC_HEIGHT = Math.max($_CROPPER.height() - POS_Y, MIN_HEIGHT);
 															
-									if( CropLimitTop <= TOP && SC_HEIGHT > MIN_HEIGHT ){
-										if (!AUTO_CROP) {
-											$_CROPPER.css({ 'height': SC_HEIGHT + 'px', 'top': TOP + 'px' })
-											cropCanvas.height = SC_HEIGHT
-										} else {
-											SC_WIDTH = SC_HEIGHT / ASPECT_RATIO;
-											if (SC_WIDTH < MIN_WIDTH) {
-												break; // 如果高度小於最小高度，不進行調整
-											}
-											const MAX = ADAPTED.width - $_CROPPER.position().left;
-											if (MAX < SC_WIDTH) {
-												SC_HEIGHT -= (SC_WIDTH - MAX) * ASPECT_RATIO;
-												SC_WIDTH = MAX;
-												TOP = $_CROPPER.position().top;
-											}
-											$_CROPPER.css({ 'width': SC_WIDTH + 'px', 'height': SC_HEIGHT + 'px', 'top': TOP + 'px' })
-											cropCanvas.width = SC_WIDTH;
-											cropCanvas.height = SC_HEIGHT;
-										}
-										
-										ctx_Dynamic.drawImage( staticCanvas, borderWise( $_CROPPER.position().left, true ), TOP, borderWise( $_CROPPER.width(), true ), SC_HEIGHT, 0, 0, $_CROPPER.width(), SC_HEIGHT )
-									}
+									$_CROPPER.css({ 'height': SC_HEIGHT + 'px', 'top': TOP + 'px' })
+									cropCanvas.height = SC_HEIGHT
+									
+									ctx_Dynamic.drawImage( staticCanvas, borderWise( $_CROPPER.position().left, true ), borderWise(TOP, true), $_CROPPER.width(), SC_HEIGHT, 0, 0, $_CROPPER.width(), SC_HEIGHT )
 								} break
 								
 								case 'b-crop': {
-									SC_HEIGHT = POS_Y;
+									SC_HEIGHT = Math.min(borderWise($_ADAPTER.height() - $_CROPPER.position().top, false), Math.max(POS_Y, MIN_HEIGHT));
 															
-									if( borderWise( CropLimitBottom ) >= TOP && SC_HEIGHT > MIN_HEIGHT ){
-										if (!AUTO_CROP) {
-											$_CROPPER.css('height', SC_HEIGHT + 'px')
-											cropCanvas.height = SC_HEIGHT
-										} else {
-											SC_WIDTH = SC_HEIGHT / ASPECT_RATIO;
-											if (SC_WIDTH < MIN_WIDTH) {
-												break; // 如果高度小於最小高度，不進行調整
-											}
-											const MAX = ADAPTED.width - $_CROPPER.position().left;
-											if (MAX < SC_WIDTH) {
-												SC_HEIGHT -= (SC_WIDTH - MAX) * ASPECT_RATIO;
-												SC_WIDTH = MAX;
-											}
-											$_CROPPER.css({ 'width': SC_WIDTH + 'px', 'height': SC_HEIGHT + 'px' })
-											cropCanvas.width = SC_WIDTH;
-											cropCanvas.height = SC_HEIGHT;
-										}
-										
-										ctx_Dynamic.drawImage( staticCanvas, borderWise( $_CROPPER.position().left, true ), borderWise( $_CROPPER.position().top, true ), $_CROPPER.width(), SC_HEIGHT, 0, 0, $_CROPPER.width(), SC_HEIGHT )
-									}
+									$_CROPPER.css('height', SC_HEIGHT + 'px')
+									cropCanvas.height = SC_HEIGHT
+									
+									ctx_Dynamic.drawImage( staticCanvas, borderWise( $_CROPPER.position().left, true ), borderWise( $_CROPPER.position().top, true ), $_CROPPER.width(), SC_HEIGHT, 0, 0, $_CROPPER.width(), SC_HEIGHT )
 								} break
 								
 								case 'lt-crop': {
