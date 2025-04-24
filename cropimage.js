@@ -243,41 +243,43 @@
 		function validateIMG( img, options, callback ){
 			var 
 			MIN_SIZES = { width: options.minWidth, height: options.minHeight }, // minimum size of image
-			FORMAT,
-			CROP_RATIO_W,CROP_RATIO_H
+			FORMAT_WIDTH, FORMAT_HEIGHT,
+			RATIO = 1
 			
 			if( /x/.test( options.imgFormat ) ){
 				// Format 320x400, 1000/740, ...
-				FORMAT = options.imgFormat.split('x')
+				[FORMAT_WIDTH, FORMAT_HEIGHT] = options.imgFormat.split('/');
 				
-				MIN_SIZES.width = Number( FORMAT[0] )
-				MIN_SIZES.height = Number( FORMAT[1] )
+				MIN_SIZES.width = Number( FORMAT_WIDTH )
+				MIN_SIZES.height = Number( FORMAT_HEIGHT )
 				
 				STATIC_CROP = true
 				AUTO_CROP = false
 				FREE_CROP = false
+				RATIO = 0 
 	
 				$(this).find('.R-container [data-action]').hide()
 			}
 			else if( /[1-9]\/[1-9]/.test( options.imgFormat ) ){
 				// Format 3/2, 1/6 ...
-				FORMAT = options.imgFormat.split('/')
-				
+				[FORMAT_WIDTH, FORMAT_HEIGHT] = options.imgFormat.split('/');
+				FORMAT_WIDTH = Number( FORMAT_WIDTH )
+				FORMAT_HEIGHT = Number( FORMAT_HEIGHT )
 				/**
 				 * Only one dimension (width or height) can be
 				 * adjusted to the other respective of
 				 * the defined width and height adaptive
 				 * ratio
 				 */
-				if( MIN_SIZES.width ) MIN_SIZES.height = MIN_SIZES.width * ( Number( FORMAT[1] ) / Number( FORMAT[0] ) )
-				else if( MIN_SIZES.height ) MIN_SIZES.width = MIN_SIZES.height * Number( FORMAT[0] ) / Number( FORMAT[1] )
+				if( MIN_SIZES.width ) MIN_SIZES.height = MIN_SIZES.width * ( FORMAT_HEIGHT / FORMAT_WIDTH )
+				else if( MIN_SIZES.height ) MIN_SIZES.width = MIN_SIZES.height * FORMAT_WIDTH / FORMAT_HEIGHT
 				
 				STATIC_CROP = false
 				AUTO_CROP = true
 				FREE_CROP = false
+				RATIO = FORMAT_WIDTH / FORMAT_HEIGHT
 				
 				$(this).find('.R-container [data-action]').show()
-				$(this).find('.R-container [class^=R-side-]').hide()
 			} 
 			else {
 				MIN_SIZES.width = MIN_SIZES.width || 10
@@ -290,9 +292,6 @@
 	
 				$(this).find('.R-container [data-action]').show()
 			}
-	
-			[CROP_RATIO_W, CROP_RATIO_H] = options.cropRatio.split('/');
-			if (options.flixedCrop == 'ratio') AUTO_CROP = true;
 			
 			img.width >= MIN_SIZES.width && img.height >= MIN_SIZES.height ?
 							callback.call(this, {
@@ -300,7 +299,7 @@
 								height: img.height,
 								minWidth: MIN_SIZES.width,
 								minHeight: MIN_SIZES.height,
-								ratio: Number( CROP_RATIO_W ) / Number( CROP_RATIO_H )
+								ratio: RATIO
 							})
 							: DisplayError.call(this, 'This image is smaller than '+ MIN_SIZES.width +'x'+ MIN_SIZES.height )
 		}
@@ -328,8 +327,6 @@
 				outBoundColor: 'dark', // light, dark, none
 				// deprecated
 				btnDoneAttr: '.R-container .R-btn-done',
-				cropRatio: '1/1',//設定裁切框比例
-				flixedCrop: 'none', //固定切框比例，可以是none、ratio、size
 				isOnFloatingWindow: false, //若使用在懸浮視窗上時，裁切框的top會因為受到boby的滾動位置而造成取到的值有偏差
 				isAutoDownsize: false //是否自動縮小圖片
 			}, options ),
@@ -642,7 +639,7 @@
 								
 									if( CropLimitLeft <= LEFT && SC_WIDTH > MIN_WIDTH ){
 	
-										if (OPTIONS.flixedCrop != 'ratio') {
+										if (!AUTO_CROP) {
 											$_CROPPER.css({ 'width': SC_WIDTH + 'px', 'left': LEFT + 'px' })
 											cropCanvas.width = SC_WIDTH
 										} else {
@@ -670,7 +667,7 @@
 	
 									if( borderWise( CropLimitRight ) >= LEFT && SC_WIDTH > MIN_WIDTH ){
 	
-										if (OPTIONS.flixedCrop != 'ratio') {
+										if (!AUTO_CROP) {
 											$_CROPPER.css('width', SC_WIDTH + 'px')
 											cropCanvas.width = SC_WIDTH
 										} else {
@@ -696,7 +693,7 @@
 									SC_HEIGHT = $_CROPPER.height() - POS_Y;
 															
 									if( CropLimitTop <= TOP && SC_HEIGHT > MIN_HEIGHT ){
-										if (OPTIONS.flixedCrop != 'ratio') {
+										if (!AUTO_CROP) {
 											$_CROPPER.css({ 'height': SC_HEIGHT + 'px', 'top': TOP + 'px' })
 											cropCanvas.height = SC_HEIGHT
 										} else {
@@ -723,7 +720,7 @@
 									SC_HEIGHT = POS_Y;
 															
 									if( borderWise( CropLimitBottom ) >= TOP && SC_HEIGHT > MIN_HEIGHT ){
-										if (OPTIONS.flixedCrop != 'ratio') {
+										if (!AUTO_CROP) {
 											$_CROPPER.css('height', SC_HEIGHT + 'px')
 											cropCanvas.height = SC_HEIGHT
 										} else {
@@ -950,8 +947,6 @@
 			
 			// Mount initial image
 			OPTIONS.image && setImage.call(this, OPTIONS.image)
-	
-			if (OPTIONS.flixedCrop == 'size') $_TRIGGERS.hide();
 	
 			return {
 				setImage,
