@@ -566,8 +566,8 @@
 						$(OPTIONS.btnDoneAttr).click(function () {
 							if (typeof callback != 'function') return;
 							let _staticCanvas = staticCanvas, offsetX = borderWise($_CROPPER.position().left, true), offsetY = borderWise($_CROPPER.position().top, true);
-							const targetWidth = Math.floor(unBorderWise($_CROPPER.width()) / ADAPTED.scale)
-							const targetHeight = Math.floor(unBorderWise($_CROPPER.height()) / ADAPTED.scale)
+							const targetWidth = Math.round(unBorderWise($_CROPPER.width()) / ADAPTED.scale)
+							const targetHeight = Math.round(unBorderWise($_CROPPER.height()) / ADAPTED.scale)
 							rawCropCanvas.width = targetWidth
 							rawCropCanvas.height = targetHeight
 							if (!OPTIONS.isAutoDownsize) {
