@@ -17,5 +17,11 @@
     "cropper",
     "image-cropper",
     "jquery"
-  ]
+  ],
+  "scripts": {
+    "build": "terser cropimage.js -c -m -o cropimage.min.js"
+  },
+  "devDependencies": {
+    "terser": "^5.39.0"
+  }
 }
