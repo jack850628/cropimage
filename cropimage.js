@@ -566,8 +566,8 @@
 						$(OPTIONS.btnDoneAttr).click(function () {
 							if (typeof callback != 'function') return;
 							let _staticCanvas = staticCanvas, offsetX = borderWise($_CROPPER.position().left, true), offsetY = borderWise($_CROPPER.position().top, true);
-							const targetWidth = Math.ceil(unBorderWise($_CROPPER.width()) / ADAPTED.scale)
-							const targetHeight = Math.ceil(unBorderWise($_CROPPER.height()) / ADAPTED.scale)
+							const targetWidth = Math.floor(unBorderWise($_CROPPER.width()) / ADAPTED.scale)
+							const targetHeight = Math.floor(unBorderWise($_CROPPER.height()) / ADAPTED.scale)
 							rawCropCanvas.width = targetWidth
 							rawCropCanvas.height = targetHeight
 							if (!OPTIONS.isAutoDownsize) {
@@ -596,13 +596,12 @@
 							
 							// Cropper moving position
 							var
-							LEFT = ( touch ? e.originalEvent.touches[0].clientX : e.pageX ) - MOVING.x,
-							TOP = ( touch ? e.originalEvent.touches[0].clientY : e.pageY ) - MOVING.y,
-							M_X = ( LEFT >= MoveLimitLeft && LEFT <= borderWise( MoveLimitRight ) ),
-							M_Y = ( TOP >= MoveLimitTop && TOP <= borderWise( MoveLimitBottom ) )
-									
-							M_X ? $_CROPPER.css( 'left', LEFT +'px' ) : LEFT = $_CROPPER.position().left
-							M_Y ? $_CROPPER.css( 'top', TOP +'px' ) : TOP = $_CROPPER.position().top
+							LEFT = Math.min(borderWise(MoveLimitRight), Math.max(0, ( touch ? e.originalEvent.touches[0].clientX : e.pageX ) - MOVING.x)),
+							TOP =  Math.min(borderWise(MoveLimitBottom), Math.max(0, ( touch ? e.originalEvent.touches[0].clientY : e.pageY ) - MOVING.y))
+	
+							$_CROPPER.css('left', LEFT + 'px')
+							$_CROPPER.css('top', TOP + 'px')
+	
 							
 							if( zoom > 1 ){
 								// showing zoomed image ( out of the container sizes ) in function of the position of the mouse
@@ -651,7 +650,12 @@
 											if (SC_HEIGHT < MIN_HEIGHT) {
 												break; // 如果高度小於最小高度，不進行調整
 											}
-	
+											const MAX = ADAPTED.height - $_CROPPER.position().top;
+											if (MAX < SC_HEIGHT) {
+												SC_WIDTH -= (SC_HEIGHT - MAX ) / ASPECT_RATIO;
+												SC_HEIGHT = MAX;
+												LEFT = $_CROPPER.position().left;
+											}
 											$_CROPPER.css({ 'width': SC_WIDTH + 'px', 'height': SC_HEIGHT + 'px', 'left': LEFT + 'px' })
 											cropCanvas.width = SC_WIDTH;
 											cropCanvas.height = SC_HEIGHT;
@@ -674,7 +678,11 @@
 											if (SC_HEIGHT < MIN_HEIGHT) {
 												break; // 如果高度小於最小高度，不進行調整
 											}
-	
+											const MAX = ADAPTED.height - $_CROPPER.position().top;
+											if (MAX < SC_HEIGHT) {
+												SC_WIDTH -= (SC_HEIGHT - MAX) / ASPECT_RATIO;
+												SC_HEIGHT = MAX;
+											}
 											$_CROPPER.css({ 'width': SC_WIDTH + 'px', 'height': SC_HEIGHT + 'px'})
 											cropCanvas.width = SC_WIDTH;
 											cropCanvas.height = SC_HEIGHT;
@@ -696,7 +704,12 @@
 											if (SC_WIDTH < MIN_WIDTH) {
 												break; // 如果高度小於最小高度，不進行調整
 											}
-	
+											const MAX = ADAPTED.width - $_CROPPER.position().left;
+											if (MAX < SC_WIDTH) {
+												SC_HEIGHT -= (SC_WIDTH - MAX) * ASPECT_RATIO;
+												SC_WIDTH = MAX;
+												TOP = $_CROPPER.position().top;
+											}
 											$_CROPPER.css({ 'width': SC_WIDTH + 'px', 'height': SC_HEIGHT + 'px', 'top': TOP + 'px' })
 											cropCanvas.width = SC_WIDTH;
 											cropCanvas.height = SC_HEIGHT;
@@ -718,7 +731,11 @@
 											if (SC_WIDTH < MIN_WIDTH) {
 												break; // 如果高度小於最小高度，不進行調整
 											}
-	
+											const MAX = ADAPTED.width - $_CROPPER.position().left;
+											if (MAX < SC_WIDTH) {
+												SC_HEIGHT -= (SC_WIDTH - MAX) * ASPECT_RATIO;
+												SC_WIDTH = MAX;
+											}
 											$_CROPPER.css({ 'width': SC_WIDTH + 'px', 'height': SC_HEIGHT + 'px' })
 											cropCanvas.width = SC_WIDTH;
 											cropCanvas.height = SC_HEIGHT;
