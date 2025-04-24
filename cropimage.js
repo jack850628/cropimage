@@ -42,13 +42,15 @@
 		})
 	
 		function DisplayError( message ){
-			$('.R-container').append('<div class="R-error">'+ message +'</div>')
-			setTimeout( () => $('.R-container .R-error').remove(), 8000 )
+			$(this).find('.R-container').append('<div class="R-error">'+ message +'</div>')
+			setTimeout(() => $(this).find('.R-container .R-error').remove(), 8000 )
 		}
 		
 		function CreateCropBox( options ){
 			// Create the resizing hoster block
 			return `<div class="R-container">
+								<canvas class="rawStatCanvas" style="display: none;"></canvas>
+								<canvas class="rawDynaCanvas" style="display: none;"></canvas>
 								<div class="R-cover"></div>
 								
 								<div class="R-adapter">
@@ -147,7 +149,9 @@
 		function Cropper(e, adapted, callback) {
 			// 獲取渲染圖像的尺寸
 			var rendWidth = adapted.width,
-				rendHeight = adapted.height;
+				rendHeight = adapted.height,
+				minWidth = e.minWidth * adapted.scale,
+				minHeight = e.minHeight * adapted.scale;
 	
 			// 目標裁剪區域的尺寸
 			var destinationWidth, destinationHeight;
@@ -168,20 +172,20 @@
 					destinationWidth = heightBasedWidth;
 					destinationHeight = rendHeight;
 				}
-			} else {
-				// 如果沒有指定比例，使用原圖比例或最小尺寸比例
-				var imgRatio = rendWidth / rendHeight;
-				var minRatio = e.minWidth / e.minHeight;
-	
-				if (imgRatio > minRatio) {
-					// 原圖較寬
-					destinationHeight = rendHeight;
-					destinationWidth = rendHeight * minRatio;
-				} else {
-					// 原圖較高
+			} else if (minWidth && minHeight) {
+				if (minWidth <= rendWidth && minHeight <= rendHeight) {
+					destinationWidth = minWidth;
+					destinationHeight = minHeight;
+				} else if (minWidth > rendWidth) {
 					destinationWidth = rendWidth;
-					destinationHeight = rendWidth / minRatio;
+					destinationHeight = minHeight * (rendWidth / minWidth);
+				} else {
+					destinationHeight = rendHeight;
+					destinationWidth = minWidth * (rendHeight / minHeigh);
 				}
+			} else {
+				destinationWidth = rendWidth;
+				destinationHeight = rendHeight;
 			}
 	
 			// 計算居中位置
@@ -197,13 +201,14 @@
 			});
 		}
 		
-		function AdaptImg( e, CONTAINER, callback ){
+		function AdaptImg(e, CONTAINER, options, callback ){
 			// Adapt the image format to the container ( adaptation by responsive )
 			var 
 			rendWidth = e.width,
 			rendHeight = e.height,
 			rendTop = 0,
-			rendLeft = 0
+			rendLeft = 0,
+			scale = 1
 	
 			rendWidth *= CONTAINER.height() / e.height
 			if( rendWidth > CONTAINER.width() )
@@ -215,10 +220,20 @@
 				
 			rendTop = ( CONTAINER.height() - rendHeight ) / 2
 			rendLeft = ( CONTAINER.width() - rendWidth ) / 2
-				
+	
+			if (!options.isAutoDownsize) {
+				if (rendWidth > rendHeight)
+					scale = Math.min(rendWidth / e.width, scale);
+				else
+					scale = Math.min(rendHeight / e.height, scale);
+			}
+	
 			callback({
 				width: rendWidth, 
 				height: rendHeight,
+				origWidth: e.width,
+				origHeight: e.height,
+				scale: scale,
 				left: rendLeft,
 				top: rendTop,
 				HzImage: e.width != e.height ? e.width > e.height : null
@@ -242,7 +257,7 @@
 				AUTO_CROP = false
 				FREE_CROP = false
 	
-				$('.R-container [data-action]').hide()
+				$(this).find('.R-container [data-action]').hide()
 			}
 			else if( /[1-9]\/[1-9]/.test( options.imgFormat ) ){
 				// Format 3/2, 1/6 ...
@@ -261,8 +276,8 @@
 				AUTO_CROP = true
 				FREE_CROP = false
 				
-				$('.R-container [data-action]').show()
-				$('.R-container [class^=R-side-]').hide()
+				$(this).find('.R-container [data-action]').show()
+				$(this).find('.R-container [class^=R-side-]').hide()
 			} 
 			else {
 				MIN_SIZES.width = MIN_SIZES.width || 10
@@ -273,21 +288,21 @@
 				AUTO_CROP = false
 				FREE_CROP = true
 	
-				$('.R-container [data-action]').show()
+				$(this).find('.R-container [data-action]').show()
 			}
 	
 			[CROP_RATIO_W, CROP_RATIO_H] = options.cropRatio.split('/');
-			if (options.isFlixedCropRatio) AUTO_CROP = true;
+			if (options.flixedCrop == 'ratio') AUTO_CROP = true;
 			
 			img.width >= MIN_SIZES.width && img.height >= MIN_SIZES.height ?
-							callback({
+							callback.call(this, {
 								width: img.width,
 								height: img.height,
 								minWidth: MIN_SIZES.width,
 								minHeight: MIN_SIZES.height,
 								ratio: Number( CROP_RATIO_W ) / Number( CROP_RATIO_H )
 							})
-							: DisplayError('This image is smaller than '+ MIN_SIZES.width +'x'+ MIN_SIZES.height )
+							: DisplayError.call(this, 'This image is smaller than '+ MIN_SIZES.width +'x'+ MIN_SIZES.height )
 		}
 	
 		function getImageSource( image ){
@@ -314,8 +329,9 @@
 				// deprecated
 				btnDoneAttr: '.R-container .R-btn-done',
 				cropRatio: '1/1',//設定裁切框比例
-				isFlixedCropRatio: false, //固定切框比例
-				isOnFloatingWindow: false //若使用在懸浮視窗上時，裁切框的top會因為受到boby的滾動位置而造成取到的值有偏差
+				flixedCrop: 'none', //固定切框比例，可以是none、ratio、size
+				isOnFloatingWindow: false, //若使用在懸浮視窗上時，裁切框的top會因為受到boby的滾動位置而造成取到的值有偏差
+				isAutoDownsize: false //是否自動縮小圖片
 			}, options ),
 			IMG_URL
 	
@@ -325,20 +341,22 @@
 			
 			let  
 			_IMG_ = null,
-			$_CONTAINER = $(".R-container"),
-			$_ADAPTER = $(".R-adapter"),
-			$_CROPPER = $(".R-cropper"),
-			$_COVER = $(".R-cover"),
-			$_TRIGGERS = $('[class^="R-side-"], [class^="R-corner-"]'),
+			$_CONTAINER = $(this).find( ".R-container"),
+			$_ADAPTER = $(this).find(".R-adapter"),
+			$_CROPPER = $(this).find(".R-cropper"),
+			$_COVER = $(this).find(".R-cover"),
+			$_TRIGGERS = $(this).find('[class^="R-side-"], [class^="R-corner-"]'),
 			cropCanvas = null,
+			rawCropCanvas = null,
 			staticCanvas = null,
+			rawStaticCanvas = null,
 			ctx_Static = null,
 			ctx_Dynamic = null
 			
 			/**
 			 * Mount image to crop and the canvas background
 			 */
-			function setImage( image ){
+			function setImage(image) {
 				OPTIONS.image = image
 	
 				_IMG_ = new Image()
@@ -351,10 +369,10 @@
 														: _IMG_.crossOrigin = '*'
 														
 				_IMG_.onerror = function( error ){ console.error(`Error loading the image: ${error}`) }
-				_IMG_.onload = function(){
+				_IMG_.onload = () => {
 					/*************** Validate input image and apply crop configurations ***************/
-					validateIMG( _IMG_, OPTIONS, initialize )
-					$(window).on('resize', function(){ validateIMG( _IMG_, OPTIONS, initialize ) })
+					validateIMG.call(this,  _IMG_, OPTIONS, initialize )
+					$(window).on('resize', () => validateIMG.call(this,  _IMG_, OPTIONS, initialize ))
 				}
 	
 				IMG_URL =
@@ -387,15 +405,20 @@
 			 * (+2) - to push left & top positions to compensate the border size deficit
 			 */
 			function borderWise( value, compensate = false ){
-				return OPTIONS.noBorder ? value : value +( compensate ? 2 : - 4 )
+				return OPTIONS.noBorder ? value : value + ( compensate ? 2 : - 4 )
+			}
+			function unBorderWise(value, compensate = false) {
+				return OPTIONS.noBorder ? value : value - (compensate ? 2 : - 4)
 			}
 	
 			/**---------------------------------------- init crop box elements variables ----------------------------------------**/
 	
-			function initialize( originDetails ){
+			function initialize(originDetails) {
 				// Variable accessible outsite this function's scope
-				cropCanvas = document.querySelector('.dynaCanvas')
-				staticCanvas = document.querySelector('.statCanvas')
+				rawCropCanvas = this.find('.rawDynaCanvas')[0]
+				cropCanvas = this.find('.dynaCanvas')[0]
+				rawStaticCanvas = this.find('.rawStatCanvas')[0]
+				staticCanvas = this.find('.statCanvas')[0]
 				
 				ctx_Static = staticCanvas.getContext('2d')
 				ctx_Dynamic = cropCanvas.getContext('2d')
@@ -405,10 +428,12 @@
 				ctx_Dynamic.imageSmoothingQuality = 'high'
 				
 				/*************** Adapt the picture to the container ( responsive ) ***************/
-				AdaptImg( originDetails, $_CONTAINER, function( ADAPTED ){
+				AdaptImg( originDetails, $_CONTAINER, OPTIONS, function( ADAPTED ){
 					// given the picture size to the static canvas
 					staticCanvas.width = ADAPTED.width
 					staticCanvas.height = ADAPTED.height
+					ctx_Static.scale(ADAPTED.scale, ADAPTED.scale)
+					//ctx_Dynamic.scale(ADAPTED.scale, ADAPTED.scale)
 	
 					// Cover only the space of the image
 					$_COVER.css({
@@ -451,6 +476,7 @@
 						NO_MOVE = false, // variable of transition between moving and resizing scale
 						ZOOMING = { width: ADAPTED.width, height: ADAPTED.height, left: 0, top: 0 }, // init image zoom sizes and position
 						MOVING = {}, // moving informations
+						LAST_MOVING = {},
 						RESIZING = {}, // resizing informations
 							
 						// Static canvas zooming informations
@@ -460,10 +486,10 @@
 					
 						/**---------------------------------------- init canvas images ----------------------------------------**/
 						
-						setTimeout( () => {
-							ctx_Static.drawImage( _IMG_, 0, 0, ADAPTED.width, ADAPTED.height ); // Set picture into the static canvas
+						setTimeout(() => {
+							ctx_Static.drawImage(_IMG_, 0, 0, (OPTIONS.isAutoDownsize) ? ADAPTED.width : ADAPTED.origWidth, (OPTIONS.isAutoDownsize) ? ADAPTED.height : ADAPTED.origHeight); // Set picture into the static canvas
 							$_ADAPTER.css({ left: ADAPTED.left, top: ADAPTED.top, width: ADAPTED.width, height: ADAPTED.height }) // init the cropper sizes and position
-							
+	
 							// Load first shot of image into the dynamic canvas ( cropper )
 							ctx_Dynamic.drawImage( staticCanvas, borderWise( CROPPED.left, true ), borderWise( CROPPED.top, true ), CROPPED.width, CROPPED.height, 0, 0, CROPPED.width, CROPPED.height )
 						}, 10 )
@@ -488,8 +514,8 @@
 							zoom == 1 ? zoomUp = true : null
 							zoom > ( OPTIONS.zoomMax - 0.5 ) ? zoomUp = false : null
 							
-							MOVING.ox = Math.floor( e.pageX - $_COVER.offset().left )
-							MOVING.oy = Math.floor( e.pageY - $_COVER.offset().top )
+							LAST_MOVING.ox = MOVING.ox = Math.floor( e.pageX - $_COVER.offset().left )
+							LAST_MOVING.oy = MOVING.oy = Math.floor( e.pageY - $_COVER.offset().top )
 									
 							zooming( zoomUp )
 						} )
@@ -537,7 +563,31 @@
 						} )
 						
 						// DEPRECATED: Trigger event when the resizing is declare as done
-						$( OPTIONS.btnDoneAttr ).click( function(){ typeof callback == 'function' && callback( cropCanvas.toDataURL('image/jpeg') ) } )
+						$(OPTIONS.btnDoneAttr).click(function () {
+							if (typeof callback != 'function') return;
+							let _staticCanvas = staticCanvas, offsetX = borderWise($_CROPPER.position().left, true), offsetY = borderWise($_CROPPER.position().top, true);
+							const targetWidth = Math.ceil(unBorderWise($_CROPPER.width()) / ADAPTED.scale)
+							const targetHeight = Math.ceil(unBorderWise($_CROPPER.height()) / ADAPTED.scale)
+							rawCropCanvas.width = targetWidth
+							rawCropCanvas.height = targetHeight
+							if (!OPTIONS.isAutoDownsize) {
+								let _offsetX = 0, _offsetY = 0, width = ADAPTED.origWidth, height = ADAPTED.origHeight
+								_staticCanvas = rawStaticCanvas
+								rawStaticCanvas.width = ADAPTED.origWidth
+								rawStaticCanvas.height = ADAPTED.origHeight
+								if (zoom > 1) {
+									_offsetX = (-LAST_MOVING.ox * deffZoom)
+									_offsetY = (-LAST_MOVING.oy * deffZoom)
+									width = ZOOMING.width
+									height = ZOOMING.height
+								}
+								offsetX /= ADAPTED.scale
+								offsetY /= ADAPTED.scale
+								rawStaticCanvas.getContext('2d').drawImage(_IMG_, _offsetX, _offsetY, width, height);
+							}
+							rawCropCanvas.getContext('2d').drawImage(_staticCanvas, offsetX, offsetY, targetWidth, targetHeight, 0, 0, targetWidth, targetHeight)
+							callback(rawCropCanvas.toDataURL('image/jpeg'))
+						})
 						
 						/**---------------------------------------- pilote functions ----------------------------------------**/
 						
@@ -559,8 +609,8 @@
 								ctx_Static.clearRect( 0, 0, ZOOMING.width, ZOOMING.height );
 								
 								// mouse position
-								MOVING.ox = Math.floor( e.pageX - $_COVER.offset().left )
-								MOVING.oy = Math.floor( e.pageY - $_COVER.offset().top )
+								LAST_MOVING.ox = MOVING.ox = Math.floor((e.pageX - $_COVER.offset().left) / ADAPTED.scale)
+								LAST_MOVING.oy = MOVING.oy = Math.floor((e.pageY - $_COVER.offset().top) / ADAPTED.scale)
 								
 								// ration between original and zoomed image sizes
 								// deffZoom = ( zoom - ( zoom > 1 ? ( zoom / 2 ) : 0 ) )
@@ -568,7 +618,7 @@
 								ctx_Static.drawImage( _IMG_, -MOVING.ox * deffZoom, -MOVING.oy * deffZoom, ZOOMING.width, ZOOMING.height )
 							}
 							
-							ctx_Dynamic.drawImage( staticCanvas, borderWise( LEFT, true ), borderWise( TOP, true ), $_CROPPER.width(), $_CROPPER.height(), 0, 0, $_CROPPER.width(), $_CROPPER.height() ) // image of this position
+							ctx_Dynamic.drawImage(staticCanvas, borderWise(LEFT, true), borderWise(TOP, true), $_CROPPER.width(), $_CROPPER.height(), 0, 0, $_CROPPER.width(), $_CROPPER.height()) // image of this position
 						}
 						
 						function resizing( e, RESIZING, touch ){
@@ -593,7 +643,7 @@
 								
 									if( CropLimitLeft <= LEFT && SC_WIDTH > MIN_WIDTH ){
 	
-										if (!OPTIONS.isFlixedCropRatio) {
+										if (OPTIONS.flixedCrop != 'ratio') {
 											$_CROPPER.css({ 'width': SC_WIDTH + 'px', 'left': LEFT + 'px' })
 											cropCanvas.width = SC_WIDTH
 										} else {
@@ -616,7 +666,7 @@
 	
 									if( borderWise( CropLimitRight ) >= LEFT && SC_WIDTH > MIN_WIDTH ){
 	
-										if (!OPTIONS.isFlixedCropRatio) {
+										if (OPTIONS.flixedCrop != 'ratio') {
 											$_CROPPER.css('width', SC_WIDTH + 'px')
 											cropCanvas.width = SC_WIDTH
 										} else {
@@ -638,7 +688,7 @@
 									SC_HEIGHT = $_CROPPER.height() - POS_Y;
 															
 									if( CropLimitTop <= TOP && SC_HEIGHT > MIN_HEIGHT ){
-										if (!OPTIONS.isFlixedCropRatio) {
+										if (OPTIONS.flixedCrop != 'ratio') {
 											$_CROPPER.css({ 'height': SC_HEIGHT + 'px', 'top': TOP + 'px' })
 											cropCanvas.height = SC_HEIGHT
 										} else {
@@ -660,7 +710,7 @@
 									SC_HEIGHT = POS_Y;
 															
 									if( borderWise( CropLimitBottom ) >= TOP && SC_HEIGHT > MIN_HEIGHT ){
-										if (!OPTIONS.isFlixedCropRatio) {
+										if (OPTIONS.flixedCrop != 'ratio') {
 											$_CROPPER.css('height', SC_HEIGHT + 'px')
 											cropCanvas.height = SC_HEIGHT
 										} else {
@@ -856,8 +906,8 @@
 							else if( zoom > 1 ) zoom-- // zoom down
 							
 							// Zoomed image dimensions
-							ZOOMING.width = ADAPTED.width * zoom
-							ZOOMING.height = ADAPTED.height * zoom
+							ZOOMING.width = ((OPTIONS.isAutoDownsize) ? ADAPTED.width : ADAPTED.origWidth) * zoom
+							ZOOMING.height = ((OPTIONS.isAutoDownsize) ? ADAPTED.height : ADAPTED.origHeight) * zoom
 							
 							// ration between original and zoomed image sizes
 							deffZoom = ( zoom - ( zoom > 1 ? ( zoom / 2 ) : 0 ) )
@@ -882,13 +932,15 @@
 			}
 			
 			// Mount initial image
-			OPTIONS.image && setImage( OPTIONS.image )
+			OPTIONS.image && setImage.call(this, OPTIONS.image)
+	
+			if (OPTIONS.flixedCrop == 'size') $_TRIGGERS.hide();
 	
 			return {
 				setImage,
-				getImage: function( format = 'jpeg' ){
+				getImage: ( format = 'jpeg' ) => {
 					if( !IMG_URL ){
-						DisplayError('Configuration Error: Undefined image URL or blob image file')
+						DisplayError.call(this, 'Configuration Error: Undefined image URL or blob image file')
 						return
 					}
 	
