@@ -248,7 +248,7 @@
 			
 			if( /x/.test( options.imgFormat ) ){
 				// Format 320x400, 1000/740, ...
-				[FORMAT_WIDTH, FORMAT_HEIGHT] = options.imgFormat.split('/');
+				[FORMAT_WIDTH, FORMAT_HEIGHT] = options.imgFormat.split('x');
 				
 				MIN_SIZES.width = Number( FORMAT_WIDTH )
 				MIN_SIZES.height = Number( FORMAT_HEIGHT )
