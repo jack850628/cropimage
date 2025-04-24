@@ -273,6 +273,8 @@
 				 */
 				if( MIN_SIZES.width ) MIN_SIZES.height = MIN_SIZES.width * ( FORMAT_HEIGHT / FORMAT_WIDTH )
 				else if( MIN_SIZES.height ) MIN_SIZES.width = MIN_SIZES.height * FORMAT_WIDTH / FORMAT_HEIGHT
+				MIN_SIZES.width = MIN_SIZES.width || 1
+				MIN_SIZES.height = MIN_SIZES.height || 1
 				
 				STATIC_CROP = false
 				AUTO_CROP = true
@@ -282,8 +284,8 @@
 				$(this).find('.R-container [data-action]').show()
 			} 
 			else {
-				MIN_SIZES.width = MIN_SIZES.width || 10
-				MIN_SIZES.height = MIN_SIZES.height || 10
+				MIN_SIZES.width = MIN_SIZES.width || 1
+				MIN_SIZES.height = MIN_SIZES.height || 1
 	
 				// automatic format and changeable
 				STATIC_CROP = false
