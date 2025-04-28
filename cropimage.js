@@ -531,36 +531,36 @@
 							MoveLimitBottom = ADAPTED.height - $_CROPPER.height()
 						} )
 						
-						$_TRIGGERS.mousedown( function(e){
+						$_TRIGGERS.mousedown(function (e) {
 							NO_MOVE = true
-							
+
 							RESIZING.t = $(this)
 							RESIZING.topHeight = $_CROPPER.position().top + $_CROPPER.height() // to calculate TOP by scale LEFT movement in AUTO RESIZING
-						} )
-						
-						$(document).mouseup( function(){ stop() } )
-						
-						.mousemove( function(e){
-							e.preventDefault()
-							if( !STATIC_CROP && RESIZING.t ) resizing( e, RESIZING )
-						} )
-						
-						.touchend( function(){ stop() } )
-						
-						$_ADAPTER.mousemove( function(e){
-							e.preventDefault()
-							if( MOVING.t ) moving( e, MOVING )
-						} )
-						
-						.touchmove( function(e){
-							e.preventDefault()
-							
-							if( MOVING.t )
-								moving( e, MOVING, true )
-							
-							else if( RESIZING.t && ( RESIZING.x || RESIZING.y ) )
-								resizing( e, RESIZING, true )
-						} )
+						}).touchstart(function (e) {
+							NO_MOVE = true
+
+							RESIZING.t = $(this)
+							RESIZING.topHeight = $_CROPPER.position().top + $_CROPPER.height() // to calculate TOP by scale LEFT movement in AUTO
+						})	
+
+						$(document).mouseup(function () { stop() })
+
+							.mousemove(function (e) {
+								e.preventDefault()
+								if (!STATIC_CROP && RESIZING.t)
+									resizing(e, RESIZING)
+								else if (MOVING.t)
+									moving(e, MOVING)
+							})
+
+							.touchmove(function (e) {
+								if (!STATIC_CROP && RESIZING.t)
+									resizing(e, RESIZING, true)
+								else if (MOVING.t)
+									moving(e, MOVING, true)
+							})
+
+							.touchend(function () { stop() })
 						
 						// DEPRECATED: Trigger event when the resizing is declare as done
 						$(OPTIONS.btnDoneAttr).click(function () {
