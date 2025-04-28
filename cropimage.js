@@ -620,237 +620,171 @@
 							ctx_Dynamic.drawImage(staticCanvas, borderWise(LEFT, true), borderWise(TOP, true), $_CROPPER.width(), $_CROPPER.height(), 0, 0, $_CROPPER.width(), $_CROPPER.height()) // image of this position
 						}
 						
-						function resizing( e, RESIZING, touch ){
+						function resizing(e, RESIZING, touch) {
 							// Cropper image resizing
-							
+
 							// cropper left and top side postion
-							var 
-							LEFT = Math.min(
+							var
+								LEFT = Math.min(
 									$_CROPPER.position().left + ($_CROPPER.width() - MIN_WIDTH),
 									Math.max(
-										$_ADAPTER.offset().left, 
-										( touch ? e.originalEvent.touches[0].clientX : e.clientX )
+										$_ADAPTER.offset().left, (touch ? e.originalEvent.touches[0].clientX : e.clientX)
 									) - $_ADAPTER.offset().left
 								),
-							TOP = Math.min(
+								TOP = Math.min(
 									$_CROPPER.position().top + ($_CROPPER.height() - MIN_HEIGHT),
 									Math.max(
-										($_ADAPTER.offset().top - (OPTIONS.isOnFloatingWindow ? $(window).scrollTop() : 0)), 
-										(touch ? e.originalEvent.touches[0].clientY : e.clientY)
+										($_ADAPTER.offset().top - (OPTIONS.isOnFloatingWindow ? $(window).scrollTop() : 0)), (touch ? e.originalEvent.touches[0].clientY : e.clientY)
 									) - ($_ADAPTER.offset().top - (OPTIONS.isOnFloatingWindow ? $(window).scrollTop() : 0))
 								),
 
-							POS_X = Math.max($_ADAPTER.offset().left, ( touch ? e.originalEvent.touches[0].pageX : e.pageX )) - $_CROPPER.offset().left,
-							POS_Y = Math.max($_ADAPTER.offset().top, ( touch ? e.originalEvent.touches[0].pageY : e.pageY )) - $_CROPPER.offset().top,
-							// image relative position
-							
-							SC_WIDTH,
-							SC_HEIGHT,
-							ASPECT_RATIO = $_CROPPER.height() / $_CROPPER.width();
-							
-							switch( RESIZING.t.data('action') ){
+								POS_X = Math.max($_ADAPTER.offset().left, (touch ? e.originalEvent.touches[0].pageX : e.pageX)) - $_CROPPER.offset().left,
+								POS_Y = Math.max($_ADAPTER.offset().top, (touch ? e.originalEvent.touches[0].pageY : e.pageY)) - $_CROPPER.offset().top,
+								// image relative position
+
+								SC_WIDTH,
+								SC_HEIGHT,
+								ASPECT_RATIO = $_CROPPER.height() / $_CROPPER.width();
+
+							switch (RESIZING.t.data('action')) {
 								case 'l-crop': {
-									SC_WIDTH = Math.max( $_CROPPER.width() - POS_X, MIN_WIDTH);
-								
+									SC_WIDTH = Math.max($_CROPPER.width() - POS_X, MIN_WIDTH);
+
 									$_CROPPER.css({ 'width': SC_WIDTH + 'px', 'left': LEFT + 'px' })
 									cropCanvas.width = SC_WIDTH
 
 									ctx_Dynamic.drawImage(staticCanvas, borderWise(LEFT, true), borderWise($_CROPPER.position().top, true), SC_WIDTH, $_CROPPER.height(), 0, 0, SC_WIDTH, $_CROPPER.height())
 								} break
-								
+
 								case 'r-crop': {
 									SC_WIDTH = Math.min(borderWise($_ADAPTER.width() - $_CROPPER.position().left, false), Math.max(POS_X, MIN_WIDTH));
 
 									$_CROPPER.css('width', SC_WIDTH + 'px')
 									cropCanvas.width = SC_WIDTH
-									
-									ctx_Dynamic.drawImage( staticCanvas, borderWise( $_CROPPER.position().left, true ), borderWise( $_CROPPER.position().top, true ), SC_WIDTH, $_CROPPER.height(), 0, 0, SC_WIDTH, $_CROPPER.height() )
+
+									ctx_Dynamic.drawImage(staticCanvas, borderWise($_CROPPER.position().left, true), borderWise($_CROPPER.position().top, true), SC_WIDTH, $_CROPPER.height(), 0, 0, SC_WIDTH, $_CROPPER.height())
 								} break
-	
+
 								case 't-crop': {
 									SC_HEIGHT = Math.max($_CROPPER.height() - POS_Y, MIN_HEIGHT);
-															
+
 									$_CROPPER.css({ 'height': SC_HEIGHT + 'px', 'top': TOP + 'px' })
 									cropCanvas.height = SC_HEIGHT
-									
-									ctx_Dynamic.drawImage( staticCanvas, borderWise( $_CROPPER.position().left, true ), borderWise(TOP, true), $_CROPPER.width(), SC_HEIGHT, 0, 0, $_CROPPER.width(), SC_HEIGHT )
+
+									ctx_Dynamic.drawImage(staticCanvas, borderWise($_CROPPER.position().left, true), borderWise(TOP, true), $_CROPPER.width(), SC_HEIGHT, 0, 0, $_CROPPER.width(), SC_HEIGHT)
 								} break
-								
+
 								case 'b-crop': {
 									SC_HEIGHT = Math.min(borderWise($_ADAPTER.height() - $_CROPPER.position().top, false), Math.max(POS_Y, MIN_HEIGHT));
-															
+
 									$_CROPPER.css('height', SC_HEIGHT + 'px')
 									cropCanvas.height = SC_HEIGHT
-									
-									ctx_Dynamic.drawImage( staticCanvas, borderWise( $_CROPPER.position().left, true ), borderWise( $_CROPPER.position().top, true ), $_CROPPER.width(), SC_HEIGHT, 0, 0, $_CROPPER.width(), SC_HEIGHT )
+
+									ctx_Dynamic.drawImage(staticCanvas, borderWise($_CROPPER.position().left, true), borderWise($_CROPPER.position().top, true), $_CROPPER.width(), SC_HEIGHT, 0, 0, $_CROPPER.width(), SC_HEIGHT)
 								} break
-								
+
 								case 'lt-crop': {
-									SC_WIDTH = $_CROPPER.width() - POS_X
-									SC_HEIGHT = $_CROPPER.height() - POS_Y
-										
-									if( AUTO_CROP ){
+									SC_WIDTH = Math.max($_CROPPER.width() - POS_X, MIN_WIDTH)
+									LEFT = Math.max(borderWise(CropLimitLeft), LEFT)
+
+									if (AUTO_CROP) {
 										// proportional resizing ( width <=> height )
-										
-										if( CropLimitLeft <= LEFT && SC_WIDTH > MIN_WIDTH ){
-											
-											SC_HEIGHT = SC_WIDTH / originDetails.ratio
-											TOP = RESIZING.topHeight - SC_HEIGHT
-											
-											if( CropLimitTop <= TOP && TOP <= borderWise( ADAPTED.height - SC_HEIGHT ) && SC_HEIGHT > MIN_HEIGHT ){
-												
-												$_CROPPER.css({ 'width': SC_WIDTH +'px', 'height': SC_HEIGHT +'px', 'left': LEFT +'px', 'top': TOP +'px' })
-												cropCanvas.width = SC_WIDTH
-												cropCanvas.height = SC_HEIGHT
-												
-												ctx_Dynamic.drawImage( staticCanvas, borderWise( LEFT, true ), borderWise( TOP, true ), SC_WIDTH, SC_HEIGHT, 0, 0, SC_WIDTH, SC_HEIGHT )
-											}
+										SC_HEIGHT = Math.max(MIN_HEIGHT, SC_WIDTH / originDetails.ratio)
+										TOP = Math.min(borderWise(ADAPTED.height - SC_HEIGHT), RESIZING.topHeight - SC_HEIGHT)
+										if (TOP < CropLimitTop) {
+											SC_HEIGHT -= CropLimitTop - TOP
+											TOP = CropLimitTop
+											SC_WIDTH = SC_HEIGHT * originDetails.ratio
+											LEFT = $_CROPPER.position().left - (SC_WIDTH - $_CROPPER.width())
 										}
 									} else {
 										// free resizing
-									
-										if( CropLimitLeft <= LEFT && SC_WIDTH > MIN_WIDTH ){
-											
-											$_CROPPER.css({ 'width': SC_WIDTH +'px', 'left': LEFT +'px' })
-											cropCanvas.width = SC_WIDTH
-											
-											ctx_Dynamic.drawImage( staticCanvas, borderWise( LEFT, true ), borderWise( $_CROPPER.position().top, true ), SC_WIDTH, $_CROPPER.height(), 0, 0, SC_WIDTH, $_CROPPER.height() )
-										}
-										
-										if( CropLimitTop <= TOP && SC_HEIGHT > MIN_HEIGHT ){
-											
-											$_CROPPER.css({ 'height': SC_HEIGHT +'px', 'top': TOP +'px' })
-											cropCanvas.height = SC_HEIGHT
-											
-											ctx_Dynamic.drawImage( staticCanvas, borderWise( $_CROPPER.position().left, true ), borderWise( TOP, true ), $_CROPPER.width(), SC_HEIGHT, 0, 0, $_CROPPER.width(), SC_HEIGHT )
-										}
+										SC_HEIGHT = Math.max(MIN_HEIGHT, $_CROPPER.height() - POS_Y)
+										TOP = Math.min(borderWise(ADAPTED.height - SC_HEIGHT), RESIZING.topHeight - SC_HEIGHT)
 									}
+
+									$_CROPPER.css({ 'width': SC_WIDTH + 'px', 'height': SC_HEIGHT + 'px', 'left': LEFT + 'px', 'top': TOP + 'px' })
+									cropCanvas.width = SC_WIDTH
+									cropCanvas.height = SC_HEIGHT
+
+									ctx_Dynamic.drawImage(staticCanvas, borderWise(LEFT, true), borderWise(TOP, true), SC_WIDTH, SC_HEIGHT, 0, 0, SC_WIDTH, SC_HEIGHT)
 								} break
-								
+
 								case 'lb-crop': {
-									SC_WIDTH = $_CROPPER.width() - POS_X;
-									SC_HEIGHT = POS_Y;
-			
-									if( AUTO_CROP ){
+									SC_WIDTH = Math.max($_CROPPER.width() - POS_X, MIN_WIDTH)
+									LEFT = Math.max(borderWise(CropLimitLeft), LEFT)
+
+									if (AUTO_CROP) {
 										// proportional resizing ( width <=> height )
-										
-										if( CropLimitLeft <= LEFT && SC_WIDTH > MIN_WIDTH ){
-											
-											SC_HEIGHT = SC_WIDTH / originDetails.ratio
-											
-											if( borderWise( CropLimitBottom ) >= TOP && SC_HEIGHT > MIN_HEIGHT && SC_HEIGHT < borderWise( ADAPTED.height - $_CROPPER.position().top ) ){
-												
-												$_CROPPER.css({ 'width': SC_WIDTH +'px', 'height': SC_HEIGHT +'px', 'left': LEFT +'px' })
-												cropCanvas.width = SC_WIDTH
-												cropCanvas.height = SC_HEIGHT
-												
-												ctx_Dynamic.drawImage( staticCanvas, borderWise( LEFT, true ), borderWise( $_CROPPER.position().top, true ), SC_WIDTH, SC_HEIGHT, 0, 0, SC_WIDTH, SC_HEIGHT )
-											}
+										SC_HEIGHT = Math.max(MIN_HEIGHT, SC_WIDTH / originDetails.ratio)
+
+										if (($_CROPPER.position().top + SC_HEIGHT) > borderWise(CropLimitBottom)) {
+											SC_HEIGHT = borderWise(ADAPTED.height - $_CROPPER.position().top)
+											SC_WIDTH = SC_HEIGHT * originDetails.ratio
+											LEFT = $_CROPPER.position().left - (SC_WIDTH - $_CROPPER.width())
 										}
+
 									} else {
 										// free resizing
-										
-										if( CropLimitLeft <= LEFT && SC_WIDTH > MIN_WIDTH ){
-											
-											$_CROPPER.css({ 'width': SC_WIDTH +'px', 'left': LEFT +'px' })
-											cropCanvas.width = SC_WIDTH
-											
-											ctx_Dynamic.drawImage( staticCanvas, borderWise( LEFT, true ), borderWise( $_CROPPER.position().top, true ), SC_WIDTH, $_CROPPER.height(), 0, 0, SC_WIDTH, $_CROPPER.height() )
-										}
-										
-										if( borderWise( CropLimitBottom ) >= TOP && SC_HEIGHT > MIN_HEIGHT ){
-											
-											$_CROPPER.css( 'height', SC_HEIGHT +'px' )
-											cropCanvas.height = SC_HEIGHT
-											
-											ctx_Dynamic.drawImage( staticCanvas, borderWise( $_CROPPER.position().left, true ), borderWise( $_CROPPER.position().top, true ), $_CROPPER.width(), SC_HEIGHT, 0, 0, $_CROPPER.width(), SC_HEIGHT )
-										}
+										SC_HEIGHT = Math.min(borderWise($_ADAPTER.height() - $_CROPPER.position().top, false), Math.max(POS_Y, MIN_HEIGHT));
 									}
+
+									$_CROPPER.css({ 'width': SC_WIDTH + 'px', 'height': SC_HEIGHT + 'px', 'left': LEFT + 'px' })
+									cropCanvas.width = SC_WIDTH
+									cropCanvas.height = SC_HEIGHT
+
+									ctx_Dynamic.drawImage(staticCanvas, borderWise(LEFT, true), borderWise($_CROPPER.position().top, true), SC_WIDTH, SC_HEIGHT, 0, 0, SC_WIDTH, SC_HEIGHT)
 								} break
-								
+
 								case 'rt-crop': {
-									SC_WIDTH = POS_X;
-									SC_HEIGHT = $_CROPPER.height() - POS_Y;
-		
-									if( AUTO_CROP ){
+									SC_WIDTH = Math.min(borderWise($_ADAPTER.width() - $_CROPPER.position().left, false), Math.max(POS_X, MIN_WIDTH));
+									LEFT = Math.min(borderWise(CropLimitRight), LEFT)
+
+									if (AUTO_CROP) {
 										// proportional resizing ( width <=> height )
-										
-										if( borderWise( CropLimitRight ) >= LEFT && SC_WIDTH > MIN_WIDTH ){
-											
-											SC_HEIGHT = SC_WIDTH / originDetails.ratio
-											TOP = RESIZING.topHeight - SC_HEIGHT
-											
-											if( CropLimitTop <= TOP && SC_HEIGHT > MIN_HEIGHT ){
-												
-												$_CROPPER.css({ 'width': SC_WIDTH +'px', 'height': SC_HEIGHT +'px', 'top': TOP +'px' })
-												cropCanvas.width = SC_WIDTH
-												cropCanvas.height = SC_HEIGHT
-												
-												ctx_Dynamic.drawImage( staticCanvas, borderWise( $_CROPPER.position().left, true ), borderWise( TOP, true ), SC_WIDTH, SC_HEIGHT, 0, 0, SC_WIDTH, SC_HEIGHT )
-											}
-											
-											RESIZING.lastLeft = LEFT
+										SC_HEIGHT = Math.max(MIN_HEIGHT, SC_WIDTH / originDetails.ratio)
+										TOP = Math.min(borderWise(ADAPTED.height - SC_HEIGHT), RESIZING.topHeight - SC_HEIGHT)
+										if (TOP < CropLimitTop) {
+											SC_HEIGHT -= CropLimitTop - TOP
+											TOP = CropLimitTop
+											SC_WIDTH = SC_HEIGHT * originDetails.ratio
 										}
 									} else {
 										// free resizing
-										
-										if( borderWise( CropLimitRight ) >= LEFT && SC_WIDTH > MIN_WIDTH ){
-											
-											$_CROPPER.css( 'width', SC_WIDTH +'px' )
-											cropCanvas.width = SC_WIDTH
-											
-											ctx_Dynamic.drawImage( staticCanvas, borderWise( $_CROPPER.position().left, true ), borderWise( $_CROPPER.position().top, true ), SC_WIDTH, $_CROPPER.height(), 0, 0, SC_WIDTH, $_CROPPER.height() )
-										}
-										
-										if( CropLimitTop <= TOP && SC_HEIGHT > MIN_HEIGHT ){
-											
-											$_CROPPER.css({ 'height': SC_HEIGHT +'px', 'top': TOP +'px' })
-											cropCanvas.height = SC_HEIGHT
-											
-											ctx_Dynamic.drawImage( staticCanvas, borderWise( $_CROPPER.position().left, true ), borderWise( TOP, true ), $_CROPPER.width(), SC_HEIGHT, 0, 0, $_CROPPER.width(), SC_HEIGHT )
-										}
+										SC_HEIGHT = $_CROPPER.height() - POS_Y;
+										TOP = Math.min(borderWise(ADAPTED.height - SC_HEIGHT), RESIZING.topHeight - SC_HEIGHT)
 									}
+
+									$_CROPPER.css({ 'width': SC_WIDTH + 'px', 'height': SC_HEIGHT + 'px', 'top': TOP + 'px' })
+									cropCanvas.width = SC_WIDTH
+									cropCanvas.height = SC_HEIGHT
+
+									ctx_Dynamic.drawImage(staticCanvas, borderWise($_CROPPER.position().left, true), borderWise(TOP, true), SC_WIDTH, SC_HEIGHT, 0, 0, SC_WIDTH, SC_HEIGHT)
+									RESIZING.lastLeft = LEFT
 								} break
-								
+
 								case 'rb-crop': {
-									SC_WIDTH = POS_X;
-									SC_HEIGHT = POS_Y;
-		
-									if( AUTO_CROP ){
+									SC_WIDTH = Math.min(borderWise($_ADAPTER.width() - $_CROPPER.position().left, false), Math.max(POS_X, MIN_WIDTH));
+									LEFT = Math.max(borderWise(CropLimitRight), LEFT)
+
+									if (AUTO_CROP) {
 										// proportional resizing ( width <=> height )
-										
-										if( borderWise( CropLimitRight ) >= LEFT && SC_WIDTH > MIN_WIDTH ){
-											
-											SC_HEIGHT = SC_WIDTH / originDetails.ratio
-											
-											if( borderWise( CropLimitBottom ) >= TOP && SC_HEIGHT > MIN_HEIGHT && SC_HEIGHT < borderWise( ADAPTED.height - $_CROPPER.position().top ) ){
-												
-												$_CROPPER.css({ 'width': SC_WIDTH +'px', 'height': SC_HEIGHT +'px' })
-												cropCanvas.width = SC_WIDTH
-												cropCanvas.height = SC_HEIGHT
-												
-												ctx_Dynamic.drawImage( staticCanvas, borderWise( $_CROPPER.position().left, true ), borderWise( $_CROPPER.position().top, true ), SC_WIDTH, SC_HEIGHT, 0, 0, SC_WIDTH, SC_HEIGHT )
-											}
+										SC_HEIGHT = Math.max(MIN_HEIGHT, SC_WIDTH / originDetails.ratio)
+
+										if (($_CROPPER.position().top + SC_HEIGHT) > borderWise(CropLimitBottom)) {
+											SC_HEIGHT = borderWise(ADAPTED.height - $_CROPPER.position().top)
+											SC_WIDTH = SC_HEIGHT * originDetails.ratio
 										}
 									} else {
 										// free resizing
-											
-										if( borderWise( CropLimitRight ) >= LEFT && SC_WIDTH > MIN_WIDTH ){
-											
-											$_CROPPER.css( 'width', SC_WIDTH +'px' )
-											cropCanvas.width = SC_WIDTH
-											
-											ctx_Dynamic.drawImage( staticCanvas, borderWise( $_CROPPER.position().left, true ), borderWise( $_CROPPER.position().top, true ), SC_WIDTH, $_CROPPER.height(), 0, 0, SC_WIDTH, $_CROPPER.height() )
-										}
-										
-										if( borderWise( CropLimitBottom ) >= TOP && SC_HEIGHT > MIN_HEIGHT ){
-											
-											$_CROPPER.css( 'height', SC_HEIGHT +'px' )
-											cropCanvas.height = SC_HEIGHT
-											
-											ctx_Dynamic.drawImage( staticCanvas, borderWise( $_CROPPER.position().left, true ), borderWise( $_CROPPER.position().top, true ), $_CROPPER.width(), SC_HEIGHT, 0, 0, $_CROPPER.width(), SC_HEIGHT )
-										}
+										SC_HEIGHT = Math.min(borderWise($_ADAPTER.height() - $_CROPPER.position().top, false), Math.max(POS_Y, MIN_HEIGHT));
 									}
+
+									$_CROPPER.css({ 'width': SC_WIDTH + 'px', 'height': SC_HEIGHT + 'px' })
+									cropCanvas.width = SC_WIDTH
+									cropCanvas.height = SC_HEIGHT
+
+									ctx_Dynamic.drawImage(staticCanvas, borderWise($_CROPPER.position().left, true), borderWise($_CROPPER.position().top, true), SC_WIDTH, SC_HEIGHT, 0, 0, SC_WIDTH, SC_HEIGHT)
 								} break
 							}
 						}
