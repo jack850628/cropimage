@@ -469,8 +469,8 @@
 						CropLimitBottom = CropLimitTop + ADAPTED.height,
 	
 						// Cropper minimun sizes
-						MIN_WIDTH = originDetails.minWidth || $_CROPPER.width() / 2,
-						MIN_HEIGHT = originDetails.minHeight || $_CROPPER.height() / 2,
+						MIN_WIDTH = originDetails.minWidth * ADAPTED.scale || $_CROPPER.width() / 2,
+						MIN_HEIGHT = originDetails.minHeight * ADAPTED.scale || $_CROPPER.height() / 2,
 						
 						// transition informations variables
 						NO_MOVE = false, // variable of transition between moving and resizing scale
