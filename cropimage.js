@@ -85,90 +85,29 @@
 								</div>
 						</div>`
 		}
-		
-		//function Cropper( e, adapted, callback ){
-		//	// Define the responsivity of the cropper ( cropr ) in function of the picture and his adaptation to the container
-		//	var
-		//	rendWidth = adapted.width,
-		//	rendHeight = adapted.height,
-	
-		//	destinationWidth,
-		//	destinationHeight
-	
-		//	if( e.ratio != 1 ){
-		//		if( e.ratio < 1 ){
-		//			// Si le width du format souhaité est inferieur au height
-	
-		//			// ----- ( axe X )
-		//			destinationWidth = rendWidth < rendHeight ?
-		//											// si l'image est HAUT
-		//											( rendWidth / rendHeight ) > ( e.minWidth / e.minHeight ) ? // Test de sensibilité entre les rapports de l'image normal et du formatage
-		//																			( e.minWidth * rendHeight ) / e.minHeight // Considerable par rapport au width
-		//																			: rendWidth // Plus ou moins
-	
-		//											// si l'image est LARGE
-		//											: e.minWidth < e.minHeight ?
-		//															( e.minWidth * rendHeight ) / e.minHeight // Considerable par rapport au height
-		//															: rendWidth // Plus ou moins
-		//			// ----- ( axe Y )
-		//			destinationHeight = rendWidth < rendHeight ?
-		//										// si l'image est HAUT
-		//										( rendWidth / rendHeight ) > ( e.minWidth / e.minHeight ) ?// Test de sensibilité entre les rapports de l'image normal et du formatage
-		//																				rendHeight // Plus ou moins
-		//																				: ( e.minHeight * rendWidth ) / e.minWidth // Considerable par rapport au width
-	
-		//										// si l'image est LARGE
-		//										: e.minWidth < e.minHeight ?
-		//													rendHeight // Plus ou moins
-		//													: rendWidth * ( e.minHeight / rendHeight ) // Considerable par rapport au height
-		//		} else {
-		//			// Si le width du format souhaité est superieur au height ( commentaire inverse )
-	
-		//			destinationWidth = rendWidth < rendHeight ?
-		//																				rendWidth
-		//																				: ( rendWidth / rendHeight ) > ( e.minWidth / e.minHeight ) ?
-		//																																											( e.minWidth * rendHeight) / e.minHeight
-		//																																											: rendWidth
-		//			destinationHeight = rendWidth < rendHeight ?
-		//																				( e.minHeight * rendWidth ) / e.minWidth
-		//																				: ( rendWidth / rendHeight ) > ( e.minWidth / e.minHeight ) ?
-		//																																											rendHeight
-		//																																											: rendWidth * ( e.minHeight / rendHeight )
-		//		}
-		//	}
-		//	else destinationWidth = destinationHeight = rendWidth < rendHeight ? rendWidth : rendHeight
-	
-		//	callback({
-		//		width: destinationWidth,
-		//		height: destinationHeight,
-		//		left: adapted.HzImage ? ( rendWidth - destinationWidth ) / 2 : 0,
-		//		top: adapted.HzImage ? 0 : ( rendHeight - destinationHeight ) / 2
-		//	})
-		//}
 	
 		function Cropper(e, adapted, callback) {
-			// 獲取渲染圖像的尺寸
 			var rendWidth = adapted.width,
 				rendHeight = adapted.height,
 				minWidth = e.minWidth * adapted.scale,
 				minHeight = e.minHeight * adapted.scale;
 	
-			// 目標裁剪區域的尺寸
+			// Target crop area size
 			var destinationWidth, destinationHeight;
 	
-			// 如果指定了特定比例
+			// If a specific ratio is specified
 			if (e.ratio) {
-				// 計算基於寬度和高度的可能裁剪尺寸
+				// Calculate possible crop dimensions based on width and height
 				var widthBasedHeight = rendWidth / e.ratio;
 				var heightBasedWidth = rendHeight * e.ratio;
 	
-				// 選擇較小的尺寸，確保裁剪區域完全在圖像內
+				// Select the smaller dimension to ensure the crop area is completely within the image
 				if (widthBasedHeight <= rendHeight) {
-					// 如果基於寬度計算的高度可以適應圖像高度
+					// If the height calculated based on width can fit within the image height
 					destinationWidth = rendWidth;
 					destinationHeight = widthBasedHeight;
 				} else {
-					// 否則，使用基於高度計算的寬度
+					// Otherwise, use the width calculated based on height
 					destinationWidth = heightBasedWidth;
 					destinationHeight = rendHeight;
 				}
@@ -181,18 +120,17 @@
 					destinationHeight = minHeight * (rendWidth / minWidth);
 				} else {
 					destinationHeight = rendHeight;
-					destinationWidth = minWidth * (rendHeight / minHeigh);
+					destinationWidth = minWidth * (rendHeight / minHeight);
 				}
 			} else {
 				destinationWidth = rendWidth;
 				destinationHeight = rendHeight;
 			}
 	
-			// 計算居中位置
+			// Calculate centered position
 			var left = (rendWidth - destinationWidth) / 2;
 			var top = (rendHeight - destinationHeight) / 2;
-	
-			// 回調返回結果
+
 			callback({
 				width: destinationWidth,
 				height: destinationHeight,
@@ -221,6 +159,7 @@
 			rendTop = ( CONTAINER.height() - rendHeight ) / 2
 			rendLeft = ( CONTAINER.width() - rendWidth ) / 2
 	
+			// Calculate the image scale ratio, which will be used for the final output image size calculation. When isAutoDownsize is true, it means there's no need to restore the original image size, and the output image size will be less than or equal to the container size, so there's no need to calculate the scale.
 			if (!options.isAutoDownsize) {
 				if (rendWidth > rendHeight)
 					scale = Math.min(rendWidth / e.width, scale);
@@ -330,8 +269,8 @@
 				outBoundColor: 'dark', // light, dark, none
 				// deprecated
 				btnDoneAttr: '.R-container .R-btn-done',
-				isOnFloatingWindow: false, //若使用在懸浮視窗上時，裁切框的top會因為受到boby的滾動位置而造成取到的值有偏差
-				isAutoDownsize: false //是否自動縮小圖片
+				isOnFloatingWindow: false, //When used in a floating window, the top position of the cropping frame may have offset values due to the scroll position of the body
+				isAutoDownsize: false //whether to automatically reduce the output image size to fit within the container size
 			}, options ),
 			IMG_URL
 	
