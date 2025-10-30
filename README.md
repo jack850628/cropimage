@@ -123,7 +123,7 @@ const options = {
   isOnFloatingWindow: false,
 
   /**
-   * Whether to automatically reduce the size of the output image
+   * Whether to automatically reduce the size of the output image, output image size to fit within the cropper container size
    * 
    * Default: false
    */
